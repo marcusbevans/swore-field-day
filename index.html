@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6b3a22">
+<title>Swore Farms Field Day</title>
+<style>
+  :root {
+    --soil: #4a2e1c;
+    --ink: #2a2118;
+    --muted: #6e5c49;
+    --paper: #f7f1e6;
+    --card: #fffaf3;
+    --line: #e4d5c0;
+    --pumpkin: #d85a24;
+    --pumpkin-deep: #a33b12;
+    --corn: #e2b33a;
+    --sage: #5d6e45;
+    --sage-deep: #3e4c2d;
+    --sky: #d7e3cf;
+    --straw: #f0e2c4;
+    --shadow: 0 10px 28px rgba(74, 46, 28, 0.08);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 500px at 80% -10%, #f3d7a4 0%, transparent 55%),
+      radial-gradient(900px 420px at -10% 20%, #e7d3b4 0%, transparent 50%),
+      var(--paper);
+    min-height: 100dvh;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .app { max-width: 520px; margin: 0 auto; padding: calc(14px + var(--safe-t)) 16px calc(92px + var(--safe-b)); }
+
+  header.top {
+    display: flex; gap: 12px; align-items: center; margin-bottom: 16px;
+  }
+  .mark {
+    width: 54px; height: 54px; flex: none; border-radius: 16px;
+    background: linear-gradient(160deg, #f4a15a, var(--pumpkin) 55%, var(--pumpkin-deep));
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,.08), 0 8px 16px rgba(163, 59, 18, .2);
+    display: grid; place-items: center;
+  }
+  .mark svg { width: 34px; height: 34px; }
+  h1 { font-size: 1.45rem; line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
+  .sub { margin: 3px 0 0; color: var(--muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.82rem; }
+
+  .screen { display: none; }
+  .screen.on { display: block; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px 14px 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+  }
+  .card h2 { margin: 0 0 8px; font-size: 1.15rem; }
+  .kicker {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--pumpkin-deep); font-weight: 700; margin: 0 0 4px;
+  }
+  p.lead { margin: 0; color: var(--muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.92rem; line-height: 1.4; }
+
+  .kids { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kid {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--straw); border-radius: 12px; padding: 8px;
+    border: 1px solid transparent;
+  }
+  .kid.on { border-color: var(--pumpkin); background: #fff4e8; }
+  .swatch { width: 18px; height: 18px; border-radius: 50%; flex: none; }
+  .kid input {
+    width: 100%; border: 0; background: transparent; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+  }
+  .kid input:focus { outline: none; }
+
+  .progress-row { display: flex; gap: 8px; margin-top: 10px; }
+  .pill {
+    flex: 1; background: var(--sky); border-radius: 12px; padding: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .pill b { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  .pill span { font-size: 0.72rem; color: var(--sage-deep); letter-spacing: .04em; text-transform: uppercase; }
+
+  .fact {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.86rem; line-height: 1.45; color: var(--ink); margin: 0;
+  }
+  .fact + .fact { margin-top: 8px; }
+
+  .hunt-item, .q-card { margin-bottom: 10px; }
+  .hunt-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 12px; box-shadow: var(--shadow);
+  }
+  .hunt-item.done { background: #f3f6ee; border-color: #c9d4bc; }
+  .check {
+    width: 28px; height: 28px; border-radius: 9px; flex: none; margin-top: 1px;
+    border: 2px solid #c9b49a; background: #fff; color: white; font-weight: 700;
+  }
+  .hunt-item.done .check { background: var(--sage); border-color: var(--sage); }
+  .hunt-item h3 { margin: 0 0 2px; font-size: 1.02rem; }
+  .hunt-item p { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+
+  .filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin: 0 -2px 8px; }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; border: 1px solid var(--line); background: #fff; border-radius: 999px;
+    padding: 7px 12px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.82rem;
+  }
+  .chip.on { background: var(--soil); color: #f7f1e6; border-color: var(--soil); }
+
+  .q-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 14px; box-shadow: var(--shadow);
+  }
+  .q-card .meta { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .badge {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.68rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .badge.math { background: #fde7c7; color: #8a4b09; }
+  .badge.science { background: #e3efe0; color: #34532a; }
+  .badge.place { background: #e7eef8; color: #274066; }
+  .badge.words { background: #f8e4ef; color: #7a3158; }
+  .badge.life { background: #efe6da; color: #5c4632; }
+  .badge.age { background: var(--straw); color: var(--soil); }
+  .q-card h3 { margin: 0 0 8px; font-size: 1.18rem; line-height: 1.25; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: 0; border-radius: 12px; padding: 10px 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.88rem; background: var(--straw);
+  }
+  .btn.primary { background: var(--pumpkin); color: white; }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); }
+  .reveal, .note-box {
+    display: none; margin-top: 10px; padding: 10px 12px; border-radius: 12px;
+    background: #f6f3ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.9rem; line-height: 1.4;
+  }
+  .reveal.open, .note-box.open { display: block; }
+  textarea {
+    width: 100%; min-height: 72px; border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px; background: white; resize: vertical;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.95rem;
+  }
+  .saved-flag { font-size: 0.75rem; color: var(--sage-deep); margin-left: auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+  .calc label { display: block; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+  .row { display: flex; gap: 8px; }
+  .row input[type="number"] {
+    flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+    font-size: 1.3rem; background: white; font-variant-numeric: tabular-nums;
+  }
+  .price {
+    margin-top: 12px; background: var(--soil); color: #f7f1e6; border-radius: 16px; padding: 14px;
+  }
+  .price .big { font-size: 2rem; margin: 0; font-variant-numeric: tabular-nums; }
+  .price p { margin: 4px 0 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.85rem; color: #e7d7c4; }
+  .deal {
+    display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
+    padding: 8px 0; border-bottom: 1px dashed var(--line);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.92rem;
+  }
+  .deal:last-child { border-bottom: 0; }
+  .deal b { font-variant-numeric: tabular-nums; }
+
+  .note-entry { border-bottom: 1px solid var(--line); padding: 10px 0; }
+  .note-entry:last-child { border-bottom: 0; }
+  .note-entry .who { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.75rem; color: var(--muted); }
+  .empty { color: var(--muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.9rem; }
+
+  nav.dock {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 8px 10px calc(8px + var(--safe-b));
+    background: rgba(247, 241, 230, 0.92);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: center;
+  }
+  .dock-inner { width: min(520px, 100%); display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .dock button {
+    border: 0; background: transparent; border-radius: 12px; padding: 6px 2px 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 0.68rem;
+    color: var(--muted);
+  }
+  .dock button.on { background: #fff; color: var(--pumpkin-deep); box-shadow: var(--shadow); }
+  .dock .ico { display: block; font-size: 1.05rem; line-height: 1.2; }
+
+  .timer {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .clock { font-variant-numeric: tabular-nums; font-size: 1.8rem; margin: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none">
+        <path d="M32 40c-8 0-14-7-14-15 4 1 8 0 12-3 4 3 8 4 12 3 0 8-6 15-10 15z" fill="#fff6ea"/>
+        <path d="M32 22c2-6 6-9 10-10-1 5-2 8-4 11" stroke="#3e4c2d" stroke-width="3" stroke-linecap="round"/>
+        <path d="M18 46h28c1 6-4 10-14 10S17 52 18 46z" fill="#f4a15a"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Swore Farms Field Day</h1>
+      <p class="sub">225 Ballard Rd · homeschool notebook, ages 6–11</p>
+    </div>
+  </header>
+
+  <section class="screen on" id="today">
+    <div class="card">
+      <p class="kicker">Who's here</p>
+      <h2>Name the crew</h2>
+      <p class="lead">Tap a kid before you log an answer. Names stay on this phone.</p>
+      <div class="kids" id="kids"></div>
+      <div class="progress-row">
+        <div class="pill"><b id="huntCount">0/10</b><span>Hunt finds</span></div>
+        <div class="pill"><b id="talkCount">0</b><span>Talked through</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="kicker">On the ground</p>
+      <h2>What you'll actually see</h2>
+      <p class="fact">A 3.3-acre corn maze with about 3 miles of path. Wendy Swore cuts it freehand with a weed whacker. Signs in the maze ask farm questions: a right answer leads on, a wrong one is a dead end. Ten emergency exits.</p>
+      <p class="fact">Three pumpkin patches, about 24,000 plants and 30 varieties this year. Regular pumpkins are 40¢ a pound. Minis are $2. Small field-trip size are $3. Specialty ones, like the Wolf, are priced each.</p>
+      <p class="fact">Maze and play area $8. Wagon alone $4. Haywagon Deal (both) $10. Family pass $47. Infants 1 and under free.</p>
+      <p class="fact">Play yard: straw maze, straw slides, wheat pool, Tire Mountain. Animals that roam the farm include chickens, geese, peacocks, and a lot of cats. Not a haunted maze.</p>
+    </div>
+    <div class="card">
+      <p class="kicker">Maze clock</p>
+      <div class="timer">
+        <div>
+          <h2 class="clock" id="clock">00:00</h2>
+          <p class="lead">Average walk is about an hour.</p>
+        </div>
+        <button class="btn primary" id="timerBtn" type="button">Start</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="hunt">
+    <p class="kicker">Look around</p>
+    <h2 style="margin:0 0 10px">Scavenger hunt</h2>
+    <div id="huntList"></div>
+  </section>
+
+  <section class="screen" id="ask">
+    <div class="filters" id="filters"></div>
+    <div id="questions"></div>
+  </section>
+
+  <section class="screen" id="scale">
+    <div class="card calc">
+      <p class="kicker">At the scale</p>
+      <h2>What does this pumpkin cost?</h2>
+      <label for="lbs">Weight in pounds</label>
+      <div class="row">
+        <input id="lbs" type="number" inputmode="decimal" min="0" step="0.5" value="8" aria-label="Pounds">
+      </div>
+      <div class="price">
+        <p class="big" id="cost">$3.20</p>
+        <p id="costNote">8 lb × $0.40</p>
+      </div>
+    </div>
+    <div class="card">
+      <p class="kicker">Compare</p>
+      <h2>Tickets</h2>
+      <label for="people">People in your group, not counting babies</label>
+      <div class="row" style="margin-bottom:8px">
+        <input id="people" type="number" inputmode="numeric" min="1" step="1" value="6" aria-label="People">
+      </div>
+      <div class="deal"><span>Maze only, $8 each</span><b id="mazeOnly">$48</b></div>
+      <div class="deal"><span>Haywagon Deal, $10 each</span><b id="dealEach">$60</b></div>
+      <div class="deal"><span>Family pass</span><b>$47</b></div>
+      <p class="lead" id="dealNote" style="margin-top:8px"></p>
+    </div>
+    <div class="card">
+      <p class="kicker">Try these out loud</p>
+      <p class="fact">A 10-pound pumpkin is how much money? (Four dollars.)</p>
+      <p class="fact">You have $5. Minis are $2. How many can you buy, and what's left? (Two, with $1 left.)</p>
+      <p class="fact">Maze $8 plus wagon $4 is $12. The Haywagon Deal is $10. How much do you save? (Two dollars.)</p>
+    </div>
+  </section>
+
+  <section class="screen" id="notes">
+    <div class="card">
+      <p class="kicker">Field notebook</p>
+      <h2>What they said</h2>
+      <div id="notebook"></div>
+      <button class="btn ghost" id="clearNotes" type="button">Clear notebook</button>
+    </div>
+  </section>
+</div>
+
+<nav class="dock">
+  <div class="dock-inner">
+    <button type="button" data-tab="today" class="on"><span class="ico">☀</span>Today</button>
+    <button type="button" data-tab="hunt"><span class="ico">🌽</span>Hunt</button>
+    <button type="button" data-tab="ask"><span class="ico">?</span>Ask</button>
+    <button type="button" data-tab="scale"><span class="ico">⚖</span>Scale</button>
+    <button type="button" data-tab="notes"><span class="ico">✎</span>Notes</button>
+  </div>
+</nav>
+
+<script>
+const HUNT = [
+  ["A pumpkin bigger than your head", "Stand next to it. Whose head does it beat?"],
+  ["A mini pumpkin", "Minis are $2. Is it the size of your fist?"],
+  ["Two pumpkins that are not the same color", "Orange is not the only one. Look for white, green, or striped."],
+  ["Corn taller than a grown-up", "The maze walls are the corn. How many kids tall is a stalk?"],
+  ["A farm animal", "Chickens, geese, peacocks, or one of the barn cats count."],
+  ["The tractor or the wagon", "The wagon ride out to the patch is the Haywagon."],
+  ["Straw slide, wheat pool, or Tire Mountain", "The play yard is included with maze admission."],
+  ["The scale", "This is where the wagon of pumpkins gets weighed all at once."],
+  ["A question sign inside the maze", "Right answer, next path. Wrong answer, dead end."],
+  ["Something that smells like the farm", "Dirt, straw, corn leaves, or kettle-corn if the trucks are out."]
+];
+
+const QUESTIONS = [
+  { cat: "math", age: "6–8", q: "A mini pumpkin is $2. You have a $5 bill. How many minis can you buy?", a: "Two. You have $1 left. Five divided by two is two, with one remainder." },
+  { cat: "math", age: "8–11", q: "Regular pumpkins are 40 cents a pound. Yours weighs 12 pounds. What do you pay?", a: "$4.80. Twelve times 0.40. Or 12 × 4 dimes." },
+  { cat: "math", age: "8–11", q: "The maze is $8 and a wagon ride alone is $4. The Haywagon Deal is $10 for both. How much does the deal save?", a: "$2. Eight plus four is twelve. Twelve minus ten is two." },
+  { cat: "math", age: "9–11", q: "A family pass is $47. Six people at $8 for the maze is $48. Does the pass save money?", a: "Yes, by $1, and only if everyone was going to pay full maze price. It saves more if some of you also want the wagon." },
+  { cat: "math", age: "6–8", q: "The path inside the maze is about 3 miles. If you have walked 1 mile, how much path is left?", a: "2 miles. You do not have to walk all of it. There are 10 emergency exits." },
+  { cat: "math", age: "9–11", q: "The farm planted about 24,000 pumpkin plants and more than 30 varieties. If the plants were split evenly across 30 varieties, about how many plants of each?", a: "800. 24,000 ÷ 30 = 800. Real fields are not that even." },
+  { cat: "science", age: "6–8", q: "Why is a ripe pumpkin orange instead of green?", a: "Green comes from chlorophyll, which helps the plant catch sunlight. As the pumpkin ripens, that green fades and orange pigments (carotenoids) show through." },
+  { cat: "science", age: "6–8", q: "What does a bee do for a pumpkin plant?", a: "It moves pollen from flower to flower. Without that, many flowers never become pumpkins." },
+  { cat: "science", age: "8–11", q: "A pumpkin is a fruit. How can that be, if it does not taste like an apple?", a: "In plant science a fruit is the part that grows from a flower and holds seeds. Pumpkins, squash, tomatoes, and cucumbers all qualify. 'Vegetable' is a kitchen word." },
+  { cat: "science", age: "8–11", q: "The farm sometimes gathers pumpkins near the maze to shelter them. What are they sheltering them from?", a: "Frost. A hard freeze can damage pumpkins left in the field." },
+  { cat: "science", age: "6–11", q: "Corn in the maze is a grass. What clue on the plant makes that less surprising?", a: "The long leaves, the jointed stalk, and the tassel on top. Wheat, in the wheat pool, is a grass too." },
+  { cat: "place", age: "6–8", q: "Idaho grows more of one crop than any other state. Which crop is on the license plate?", a: "Potatoes. Swore Farms also grows red potatoes and sells them at the farm and the farmers market." },
+  { cat: "place", age: "8–11", q: "This farm is on the Fort Hall Reservation, north of Pocatello. Whose land is that?", a: "The Shoshone-Bannock Tribes. The reservation was set aside by the Fort Bridger Treaty of 1868." },
+  { cat: "place", age: "8–11", q: "Wendy cuts the maze with a weed whacker, no GPS and no map. Her daughter calls her a whimsical termite. What does that tell you about how the maze is made?", a: "It is drawn by a person walking the field, not by a computer. The shape can change every year, which is why it has been different since it started in 2004." },
+  { cat: "place", age: "6–11", q: "The average American is about four generations away from a farm. What does that mean for a kid standing in this patch?", a: "Most people no longer have a parent, grandparent, or great-grandparent who farms. A visit like this is how a lot of families learn where food starts." },
+  { cat: "words", age: "6–8", q: "Name a pumpkin with three words that are not 'big orange round.'", a: "No single right answer. Push for texture, smell, stem, or a comparison: heavy, dusty, ribbed, warty." },
+  { cat: "words", age: "6–8", q: "Find a rhyme for corn, then one for maze.", a: "Born, horn, worn. Days, ways, gaze. Then try a two-line poem on the walk back." },
+  { cat: "words", age: "8–11", q: "Wendy Swore is also a children's book author. If this maze were the start of a story, what is the problem by the first dead end?", a: "Open. Look for a character, a want, and a snag. The dead end is a ready-made snag." },
+  { cat: "words", age: "8–11", q: "The farm's line is 'We grow food for our family and yours.' Rewrite it as a sentence a 6-year-old would say.", a: "Open. Something like: 'We grow the food, then you take some home.'" },
+  { cat: "life", age: "6–8", q: "How do you pick a pumpkin you can actually carry to the wagon?", a: "Lift with your legs, test it before you commit, and pick one you can hold with two hands for the walk. The little wagons are there so you do not have to." },
+  { cat: "life", age: "8–11", q: "After Halloween, a pumpkin is still food. Name two things to do with it besides the trash.", a: "Roast the seeds, cook the flesh into bread or soup, or compost it. Carving pumpkins are often stringier than pie pumpkins, but the seeds still roast." },
+  { cat: "life", age: "6–11", q: "Why does a farm grow more food than the family can eat?", a: "To sell it: CSA boxes, the farmers market, the stand, and this patch. The money pays for seed, water, fuel, and the time it takes to weed and cut a maze." },
+  { cat: "life", age: "8–11", q: "The maze is not haunted. Why would a farm that wants school groups make that choice?", a: "So little kids, field trips, and pets can come. The teaching is in the path and the questions, not in a scare." }
+];
+
+const CATS = [
+  ["all", "All"],
+  ["math", "Math"],
+  ["science", "Science"],
+  ["place", "Place"],
+  ["words", "Words"],
+  ["life", "Life"]
+];
+
+const COLORS = ["#d85a24", "#e2b33a", "#5d6e45", "#3d6ea8"];
+const store = JSON.parse(localStorage.getItem("swore-field") || "{}");
+store.kids = store.kids || ["Kid 1", "Kid 2", "Kid 3", "Kid 4"];
+store.active = store.active ?? 0;
+store.hunt = store.hunt || {};
+store.notes = store.notes || [];
+store.talked = store.talked || {};
+function save() { localStorage.setItem("swore-field", JSON.stringify(store)); }
+
+function renderKids() {
+  const root = document.getElementById("kids");
+  root.innerHTML = "";
+  store.kids.forEach((name, i) => {
+    const el = document.createElement("label");
+    el.className = "kid" + (store.active === i ? " on" : "");
+    el.innerHTML = `<span class="swatch" style="background:${COLORS[i]}"></span>`;
+    const input = document.createElement("input");
+    input.value = name;
+    input.maxLength = 16;
+    input.addEventListener("focus", () => { store.active = i; save(); renderKids(); });
+    input.addEventListener("input", () => { store.kids[i] = input.value; save(); });
+    el.appendChild(input);
+    el.addEventListener("click", (e) => {
+      if (e.target !== input) { store.active = i; save(); renderKids(); }
+    });
+    root.appendChild(el);
+  });
+  document.getElementById("huntCount").textContent = Object.values(store.hunt).filter(Boolean).length + "/10";
+  document.getElementById("talkCount").textContent = Object.keys(store.talked).length;
+}
+
+function renderHunt() {
+  const root = document.getElementById("huntList");
+  root.innerHTML = "";
+  HUNT.forEach((item, i) => {
+    const done = !!store.hunt[i];
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "hunt-item" + (done ? " done" : "");
+    el.innerHTML = `<span class="check">${done ? "✓" : ""}</span><span><h3>${item[0]}</h3><p>${item[1]}</p></span>`;
+    el.addEventListener("click", () => {
+      store.hunt[i] = !store.hunt[i];
+      save();
+      renderHunt();
+      renderKids();
+    });
+    root.appendChild(el);
+  });
+}
+
+let filter = "all";
+function renderFilters() {
+  const root = document.getElementById("filters");
+  root.innerHTML = "";
+  CATS.forEach(([id, label]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (filter === id ? " on" : "");
+    b.textContent = label;
+    b.addEventListener("click", () => { filter = id; renderFilters(); renderQuestions(); });
+    root.appendChild(b);
+  });
+}
+function renderQuestions() {
+  const root = document.getElementById("questions");
+  root.innerHTML = "";
+  QUESTIONS.forEach((item, i) => {
+    if (filter !== "all" && item.cat !== filter) return;
+    const el = document.createElement("article");
+    el.className = "q-card";
+    const talked = store.talked[i];
+    el.innerHTML = `
+      <div class="meta">
+        <span class="badge ${item.cat}">${item.cat}</span>
+        <span class="badge age">${item.age}</span>
+        ${talked ? '<span class="saved-flag">talked</span>' : ""}
+      </div>
+      <h3>${item.q}</h3>
+      <div class="actions">
+        <button class="btn" type="button" data-reveal>Show a way in</button>
+        <button class="btn primary" type="button" data-talk>We talked about it</button>
+      </div>
+      <div class="reveal">${item.a}</div>
+      <div class="note-box">
+        <textarea placeholder="What did they say?" data-note></textarea>
+      </div>`;
+    el.querySelector("[data-reveal]").addEventListener("click", (e) => {
+      el.querySelector(".reveal").classList.toggle("open");
+      e.target.textContent = el.querySelector(".reveal").classList.contains("open") ? "Hide" : "Show a way in";
+    });
+    el.querySelector("[data-talk]").addEventListener("click", () => {
+      store.talked[i] = true;
+      el.querySelector(".note-box").classList.add("open");
+      save();
+      renderKids();
+    });
+    const area = el.querySelector("[data-note]");
+    area.addEventListener("change", () => {
+      const text = area.value.trim();
+      if (!text) return;
+      store.notes.unshift({
+        who: store.kids[store.active] || "Someone",
+        q: item.q,
+        text,
+        t: Date.now()
+      });
+      store.talked[i] = true;
+      area.value = "";
+      save();
+      renderNotes();
+      renderKids();
+    });
+    root.appendChild(el);
+  });
+}
+
+function money(n) { return "$" + n.toFixed(2); }
+function renderScale() {
+  const lbs = Math.max(0, parseFloat(document.getElementById("lbs").value) || 0);
+  const cost = lbs * 0.4;
+  document.getElementById("cost").textContent = money(cost);
+  document.getElementById("costNote").textContent = `${lbs} lb × $0.40. A mini is $2, so this field pumpkin ${cost < 2 ? "costs less than a mini" : cost === 2 ? "ties a mini" : "costs more than a mini"}.`;
+  const people = Math.max(1, parseInt(document.getElementById("people").value, 10) || 1);
+  document.getElementById("mazeOnly").textContent = money(people * 8);
+  document.getElementById("dealEach").textContent = money(people * 10);
+  const maze = people * 8;
+  const note = document.getElementById("dealNote");
+  if (maze > 47) note.textContent = `Maze-only for ${people} is ${money(maze - 47)} more than the $47 family pass.`;
+  else note.textContent = `Maze-only for ${people} is ${money(47 - maze)} less than the family pass. The pass wins once six people are paying full maze price.`;
+}
+document.getElementById("lbs").addEventListener("input", renderScale);
+document.getElementById("people").addEventListener("input", renderScale);
+
+function renderNotes() {
+  const root = document.getElementById("notebook");
+  if (!store.notes.length) {
+    root.innerHTML = '<p class="empty">Nothing logged yet. On a question, tap “We talked about it” and type what they said.</p>';
+    return;
+  }
+  root.innerHTML = store.notes.map(n => `<div class="note-entry"><div class="who">${n.who} · ${new Date(n.t).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}</div><strong>${n.q}</strong><div>${n.text}</div></div>`).join("");
+}
+document.getElementById("clearNotes").addEventListener("click", () => {
+  if (!confirm("Clear the notebook on this phone?")) return;
+  store.notes = [];
+  save();
+  renderNotes();
+});
+
+document.querySelectorAll(".dock button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".dock button").forEach(b => b.classList.remove("on"));
+    btn.classList.add("on");
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
+    document.getElementById(btn.dataset.tab).classList.add("on");
+    window.scrollTo(0, 0);
+  });
+});
+
+let timer = null, started = null, elapsed = 0;
+document.getElementById("timerBtn").addEventListener("click", () => {
+  const btn = document.getElementById("timerBtn");
+  if (timer) {
+    clearInterval(timer); timer = null; elapsed += Date.now() - started;
+    btn.textContent = "Start";
+    return;
+  }
+  started = Date.now();
+  btn.textContent = "Pause";
+  timer = setInterval(() => {
+    const ms = elapsed + (Date.now() - started);
+    const s = Math.floor(ms / 1000);
+    const m = String(Math.floor(s / 60)).padStart(2, "0");
+    document.getElementById("clock").textContent = `${m}:${String(s % 60).padStart(2, "0")}`;
+  }, 250);
+});
+
+renderKids();
+renderHunt();
+renderFilters();
+renderQuestions();
+renderScale();
+renderNotes();
+</script>
+</body>
+</html>
